@@ -89,12 +89,10 @@ fun HomeScreen(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                val enabled = isAccessibilityEnabled(context)
-                viewModel.updateAccessibility(enabled)
-
+                // 一次性同步两种锁屏方式的实时可用性，再校验锁屏开关，避免中间态误关
+                val a11y = isAccessibilityEnabled(context)
                 val dpmActive = isDpmActive(context)
-                viewModel.updateDeviceAdmin(dpmActive)
-
+                viewModel.syncLockPermissions(a11y, dpmActive)
 
                 val granted = isNotifGranted(activity)
                 if (viewModel.isNotifPermission != granted) {
@@ -306,10 +304,10 @@ fun HomeScreen(
             onDismiss = {
                 showLockMethodDialog = false
 
-                val enabled = isAccessibilityEnabled(context)
-                viewModel.updateAccessibility(enabled)
+                // 一次性同步两种锁屏方式的实时状态，避免分步更新误关锁屏开关
+                val a11y = isAccessibilityEnabled(context)
                 val dpmActive = isDpmActive(context)
-                viewModel.updateDeviceAdmin(dpmActive)
+                viewModel.syncLockPermissions(a11y, dpmActive)
             },
             title = stringResource(R.string.dialog_lock_method_title),
             description = stringResource(R.string.dialog_lock_method_desc),
