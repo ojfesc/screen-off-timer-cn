@@ -124,6 +124,8 @@ class TimerViewModel(
                 startedSeconds = state.get<Int>("started_seconds") ?: settings.startedSeconds
                 minutes = settings.minutes
                 accessibility = settings.accessibility
+                // 冷启动时恢复设备管理员状态，避免首帧 deviceAdmin 恒为 false
+                deviceAdmin = state.get<Boolean>("device_admin") ?: settings.deviceAdmin
                 isLockScreen = settings.isLockScreen
                 isStopMedia = settings.isStopMedia
                 isGoHome = settings.isGoHome
@@ -136,7 +138,6 @@ class TimerViewModel(
                 if (isRunning) {
                     reconcileTimerState()   // resume
                 }
-
             }
         }
     }
@@ -176,14 +177,39 @@ class TimerViewModel(
         accessibility = value
         state["accessibility"] = value
         Prefs.saveAccessibility(context, value)
-        updateLockScreen(isLockScreen && (accessibility || deviceAdmin))
+        applyLockScreenGuard()
     }
 
     fun updateDeviceAdmin(value: Boolean) {
         deviceAdmin = value
         state["device_admin"] = value
         Prefs.saveDeviceAdmin(context, value)
-        updateLockScreen(isLockScreen && (accessibility || deviceAdmin))
+        applyLockScreenGuard()
+    }
+
+    // 一次性写入无障碍与设备管理员两个字段，全部同步后再校验锁屏开关，
+    // 避免逐个字段更新时出现"一个为 false、另一个尚未写入"的中间态而误关锁屏
+    fun syncLockPermissions(accessibilityEnabled: Boolean, deviceAdminActive: Boolean) {
+        if (accessibility != accessibilityEnabled) {
+            accessibility = accessibilityEnabled
+            state["accessibility"] = accessibilityEnabled
+            Prefs.saveAccessibility(context, accessibilityEnabled)
+        }
+        if (deviceAdmin != deviceAdminActive) {
+            deviceAdmin = deviceAdminActive
+            state["device_admin"] = deviceAdminActive
+            Prefs.saveDeviceAdmin(context, deviceAdminActive)
+        }
+        applyLockScreenGuard()
+    }
+
+    // 只有在无障碍与设备管理员都不可用时才关闭锁屏开关，其余情况保留用户选择
+    private fun applyLockScreenGuard() {
+        if (isLockScreen && !accessibility && !deviceAdmin) {
+            isLockScreen = false
+            state["is_lock_screen"] = false
+            Prefs.saveLockScreen(context, false)
+        }
     }
 
     fun updateLockScreen(value: Boolean) {
