@@ -11,11 +11,6 @@ on:
         description: '是否标记为预发布'
         required: false
         default: 'false'
-  push:
-    branches:
-      - master
-    paths:
-      - 'release-trigger.txt'
 
 permissions:
   contents: write
@@ -120,7 +115,7 @@ jobs:
             - 应用包名 `com.inod.screenofftimer`
             - 与官方 F-Droid 版签名不同，切换时需先卸载原版
 
-            > ⚠️ 本版本使用 **debug 签名**，仅供测试安装，不适用于正式分发。
+            ${{ steps.keystore.outputs.signed == 'true' && '> ✅ 本版本使用 **正式签名**。' || '> ⚠️ 本版本使用 **debug 签名**，仅供测试安装，不适用于正式分发。' }}
 
             ### 校验信息
             - SHA256: `${{ steps.apk.outputs.sha256 }}`
