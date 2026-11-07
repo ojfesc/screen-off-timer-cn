@@ -93,11 +93,13 @@ fun SettingsScreen(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                val enabled = isAccessibilityEnabled(context)
-                if (settings.accessibility != enabled) viewModel.updateAccessibility(enabled)
+                // 一次性同步无障碍与设备管理员，再校验锁屏开关，避免分步更新产生中间态
+                val a11y = isAccessibilityEnabled(context)
+                val dpmActive = isDpmActive(context)
+                viewModel.syncLockPermissions(a11y, dpmActive)
 
                 //openApp
-                if (!enabled) viewModel.updateOpenApp(false)
+                if (!a11y) viewModel.updateOpenApp(false)
 
                 val notifGranted = isNotifGranted(activity)
                 if (settings.isNotifPermission != notifGranted) viewModel.updateNotifPermission(notifGranted)
@@ -141,17 +143,6 @@ fun SettingsScreen(
             removeDeviceAdmin(context)
             viewModel.updateDeviceAdmin(false)
         }
-    }
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                val dpmActive = isDpmActive(context)
-                viewModel.updateDeviceAdmin(dpmActive)
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     Scaffold(
@@ -365,8 +356,10 @@ fun SettingsScreen(
             },
             onDismiss = {
                 showDialogAdmin = false
+                // 用户取消授权，重新同步两种锁屏方式的实时状态，并据此校验锁屏开关
+                val a11y = isAccessibilityEnabled(context)
                 val dpmActive = isDpmActive(context)
-                viewModel.updateDeviceAdmin(dpmActive)
+                viewModel.syncLockPermissions(a11y, dpmActive)
             },
         )
     }
@@ -388,5 +381,3 @@ fun openUrl(context: Context, url: String) {
     } catch (_: Exception) {
     }
 }
-
-
