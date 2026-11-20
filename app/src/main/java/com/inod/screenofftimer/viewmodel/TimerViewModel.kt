@@ -41,9 +41,9 @@ class TimerViewModel(
         private set
     var isRunning by mutableStateOf(state.get<Boolean>("is_running") ?: false)
         private set
-    var leftSeconds by mutableIntStateOf(state.get<Int>("left_seconds") ?: 300)
+    var leftSeconds by mutableIntStateOf(state.get<Int>("left_seconds") ?: 0)
         private set
-    var startedSeconds by mutableIntStateOf(state.get<Int>("started_seconds") ?: 300)
+    var startedSeconds by mutableIntStateOf(state.get<Int>("started_seconds") ?: 0)
         private set
     var minutes by mutableIntStateOf(state.get<Int>("minutes") ?: 0)
         private set
