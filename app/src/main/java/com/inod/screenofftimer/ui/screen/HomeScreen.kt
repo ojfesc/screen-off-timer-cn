@@ -4,34 +4,49 @@ import android.app.Activity
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MusicOff
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,12 +54,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -57,13 +78,15 @@ import com.inod.screenofftimer.ui.components.ModalDialog
 import com.inod.screenofftimer.ui.components.SwitchStyle
 import com.inod.screenofftimer.ui.components.settings.ListOption
 import com.inod.screenofftimer.ui.components.settings.ListSection
-import com.inod.screenofftimer.ui.components.timer.PresetTime
-import com.inod.screenofftimer.ui.components.timer.TimerProgress
 import com.inod.screenofftimer.viewmodel.TimerViewModel
 
-//@SuppressLint("ViewModelConstructorInComposable")
-//@RequiresApi(Build.VERSION_CODES.BAKLAVA)
-//@RequiresApi(Build.VERSION_CODES.O)
+// 弹窗当前编辑的时间单位
+private enum class TimeField { HOUR, MINUTE }
+
+// 单个输入框允许的最大值，保证换算后的总秒数不超过 Int 上限
+private const val MAX_HOURS = 596_523L
+private const val MAX_MINUTES = 35_791_394L
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -74,22 +97,24 @@ fun HomeScreen(
 
     val settings by viewModel.allSettings.collectAsState()
 
-    //get data from setting object
+    // 运行状态与两个开关的当前值
     val isRunning = settings.isRunning
     val isStopMedia = settings.isStopMedia
-//    val lockScreenEnabled = settings.isLockScreen
-
-    // get from viewmodel directly
-    val timeLeftSeconds = viewModel.leftSeconds
     val lockScreenEnabled = viewModel.isLockScreen
+
+    // 倒计时总秒数：运行时由服务每秒广播刷新，空闲时来自本地配置
+    val totalSeconds = viewModel.leftSeconds.coerceAtLeast(0)
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
 
     val focusManager = LocalFocusManager.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
+    // 回到前台时读取系统里的真实权限状态，避免界面开关与系统设置不一致
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                // 一次性同步两种锁屏方式的实时可用性，再校验锁屏开关，避免中间态误关
                 val a11y = isAccessibilityEnabled(context)
                 val dpmActive = isDpmActive(context)
                 viewModel.syncLockPermissions(a11y, dpmActive)
@@ -104,12 +129,7 @@ fun HomeScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // sign the receiver broadcast
-//    DisposableEffect(Unit) {
-//        viewModel.registerReceiver(context)
-//        onDispose { viewModel.unregisterReceiver(context) }
-//    }
-
+    // 页面可见时接收倒计时广播，并与前台服务同步当前计时状态
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
@@ -117,9 +137,11 @@ fun HomeScreen(
                     viewModel.registerReceiver(context)
                     viewModel.reconcileTimerState()
                 }
+
                 Lifecycle.Event.ON_STOP -> {
                     viewModel.unregisterReceiver(context)
                 }
+
                 else -> {}
             }
         }
@@ -129,32 +151,37 @@ fun HomeScreen(
         }
     }
 
-    var showEnableAccessibilityDialog by remember { mutableStateOf(false) }
     var showNotifPermissionDialog by remember { mutableStateOf(false) }
+    var showLockMethodDialog by remember { mutableStateOf(false) }
+    var editingField by remember { mutableStateOf<TimeField?>(null) }
 
-//    val handleToggleLockscreen: (Boolean) -> Unit = { value ->
-//        viewModel.updateLockScreen(value)
-//        if (value && !isAccessibilityEnabled(context)) {
-//            showEnableAccessibilityDialog = true
-//        }
-//    }
+    // 写入新的总秒数，并同步“上次时长”，倒计时结束后可恢复到同一时长
+    val applyTotalSeconds: (Int) -> Unit = { value ->
+        val safeValue = value.coerceAtLeast(0)
+        viewModel.updateLeftSeconds(safeValue)
+        viewModel.saveLastDrag(safeValue / 60)
+    }
 
-    val handleNotifStart: () -> Unit = let@{
+    // 播放键：运行中停止，空闲时校验时长与通知权限后启动
+    val handleStartStop: () -> Unit = let@{
         if (isRunning) {
-            viewModel.stop(timeLeftSeconds)
+            viewModel.stop(totalSeconds)
             return@let
         }
 
-        viewModel.startTimer(timeLeftSeconds)
+        if (totalSeconds <= 0) {
+            return@let
+        }
 
-        val isNotifGranted = isNotifGranted(activity)
-        val notShowAsk = viewModel.isNoShowNotifPermission
+        viewModel.startTimer(totalSeconds)
+        viewModel.saveLastDrag(totalSeconds / 60)
 
-        if (!isNotifGranted) {
-            if (!notShowAsk) {
-                showNotifPermissionDialog = true
-            } else {
+        val granted = isNotifGranted(activity)
+        if (!granted) {
+            if (viewModel.isNoShowNotifPermission) {
                 showToastProperly(context)
+            } else {
+                showNotifPermissionDialog = true
             }
             return@let
         }
@@ -164,25 +191,28 @@ fun HomeScreen(
         }
     }
 
+    // 重置键：停止计时并把时间清空为默认的空
+    val handleReset: () -> Unit = {
+        if (isRunning) {
+            viewModel.stop(totalSeconds)
+        }
+        applyTotalSeconds(0)
+    }
+
     val handleNotShowAgain: () -> Unit = {
         viewModel.updateNoShowNotifPermission(true)
         showNotifPermissionDialog = false
         showToastProperly(context)
     }
 
-    var showLockMethodDialog by remember { mutableStateOf(false) }
-
+    // 打开锁屏开关时，两种锁屏方式都未授权则让用户选择一种
     val handleToggleLockscreen: (Boolean) -> Unit = { value ->
         viewModel.updateLockScreen(value)
         if (value) {
             val dpmActive = isDpmActive(context)
             val accessibilityActive = isAccessibilityEnabled(context)
-
-            when {
-                dpmActive || accessibilityActive -> {
-                }
-
-                else -> showLockMethodDialog = true
+            if (!dpmActive && !accessibilityActive) {
+                showLockMethodDialog = true
             }
         }
     }
@@ -209,8 +239,10 @@ fun HomeScreen(
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                })
-        }) { padding ->
+                }
+            )
+        }
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -219,35 +251,96 @@ fun HomeScreen(
                 .pointerInput(Unit) {
                     detectTapGestures(onTap = { focusManager.clearFocus() })
                 },
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(15.dp))
-            TimerProgress(viewModel)
-            Spacer(modifier = Modifier.height(10.dp))
-            PresetTime(viewModel)
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            FilledIconButton(
-                onClick = { handleNotifStart() },
-                modifier = Modifier.size(80.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = if (isRunning) MaterialTheme.colorScheme.errorContainer
-                    else MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = if (isRunning) MaterialTheme.colorScheme.onErrorContainer
-                    else MaterialTheme.colorScheme.onPrimaryContainer
+            // 小时输入框：点击后在弹窗内输入，运行中不可修改
+            TimeValueRow(
+                value = if (totalSeconds <= 0) "" else hours.toString(),
+                unit = stringResource(R.string.home_hour_unit),
+                enabled = !isRunning,
+                onClick = { editingField = TimeField.HOUR }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 分钟输入框：点击后在弹窗内输入，运行中不可修改
+            TimeValueRow(
+                value = if (totalSeconds <= 0) "" else minutes.toString(),
+                unit = stringResource(R.string.home_min_unit),
+                enabled = !isRunning,
+                onClick = { editingField = TimeField.MINUTE }
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 秒读数：随倒计时每秒变化，空闲时显示 0
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = seconds.toString(),
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.home_second_unit),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(28.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                AnimatedContent(targetState = isRunning, label = "icon_anim") { running ->
+                // 重置键：停止计时并清空小时与分钟
+                FilledTonalIconButton(
+                    onClick = handleReset,
+                    enabled = isRunning || totalSeconds > 0,
+                    modifier = Modifier.size(64.dp),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
                     Icon(
-                        imageVector = if (running) Icons.Default.Stop else Icons.Default.PlayArrow,
-                        modifier = Modifier.size(40.dp),
-                        contentDescription = null
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = stringResource(R.string.action_reset),
+                        modifier = Modifier.size(28.dp)
                     )
+                }
+
+                // 播放/停止键：运行中切换为停止图标并使用错误色
+                FilledIconButton(
+                    onClick = { handleStartStop() },
+                    enabled = isRunning || totalSeconds > 0,
+                    modifier = Modifier.size(80.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = if (isRunning) {
+                            MaterialTheme.colorScheme.errorContainer
+                        } else {
+                            MaterialTheme.colorScheme.primaryContainer
+                        },
+                        contentColor = if (isRunning) {
+                            MaterialTheme.colorScheme.onErrorContainer
+                        } else {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        }
+                    )
+                ) {
+                    AnimatedContent(targetState = isRunning, label = "icon_anim") { running ->
+                        Icon(
+                            imageVector = if (running) Icons.Default.Stop else Icons.Default.PlayArrow,
+                            modifier = Modifier.size(40.dp),
+                            contentDescription = null
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             ListSection {
                 ListOption(
@@ -260,7 +353,8 @@ fun HomeScreen(
                         SwitchStyle(
                             checked = isStopMedia,
                             enabled = !isRunning,
-                            onCheckedChange = { viewModel.updateStopMedia(it) })
+                            onCheckedChange = { viewModel.updateStopMedia(it) }
+                        )
                     })
                 ListOption(
                     title = stringResource(R.string.option_lock_screen_title),
@@ -276,9 +370,11 @@ fun HomeScreen(
                         )
                     })
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
 
-        //modal dialog notif
+        // 通知权限弹窗
         ModalDialog(
             show = showNotifPermissionDialog,
             title = stringResource(R.string.dialog_notif_permission_title),
@@ -296,10 +392,10 @@ fun HomeScreen(
                 }
             },
             leftButton = stringResource(R.string.dialog_notif_permission_no_show),
-            onLeftButton = { handleNotShowAgain() },
+            onLeftButton = { handleNotShowAgain() }
         )
 
-
+        // 锁屏方式弹窗
         ModalDialog(
             onDismiss = {
                 showLockMethodDialog = false
@@ -325,6 +421,163 @@ fun HomeScreen(
             show = showLockMethodDialog
         )
 
+        // 小时/分钟输入弹窗
+        val field = editingField
+        if (field != null) {
+            TimeFieldDialog(
+                field = field,
+                initialValue = when (field) {
+                    TimeField.HOUR -> if (hours > 0) hours.toString() else ""
+                    TimeField.MINUTE -> if (minutes > 0) minutes.toString() else ""
+                },
+                onDismiss = { editingField = null },
+                onReset = {
+                    // 重置：当前编辑的单位清空为默认的空，并关闭弹窗
+                    val restSeconds = when (field) {
+                        TimeField.HOUR -> minutes * 60
+                        TimeField.MINUTE -> hours * 3600
+                    }
+                    applyTotalSeconds(restSeconds)
+                    editingField = null
+                },
+                onConfirm = { raw ->
+                    // 确定：写入输入框的数值，超出 Int 秒上限时按上限截断
+                    val parsed = raw.toLongOrNull() ?: Long.MAX_VALUE
+                    val total = when (field) {
+                        TimeField.HOUR -> {
+                            val hourValue = parsed.coerceAtMost(MAX_HOURS)
+                            hourValue * 3600L + minutes * 60L
+                        }
+
+                        TimeField.MINUTE -> {
+                            val minuteValue = parsed.coerceAtMost(MAX_MINUTES)
+                            hours * 3600L + minuteValue * 60L
+                        }
+                    }
+                    applyTotalSeconds(total.coerceAtMost(Int.MAX_VALUE.toLong()).toInt())
+                    editingField = null
+                }
+            )
+        }
+    }
+}
+
+// 单个时间单位的显示行：左侧数值框，右侧单位文字
+@Composable
+private fun TimeValueRow(
+    value: String,
+    unit: String,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .width(200.dp)
+                .height(64.dp)
+                .clip(MaterialTheme.shapes.large)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .clickable(enabled = enabled, onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = if (enabled) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                }
+            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = unit,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+// 时间输入弹窗：一个数字输入框，按钮顺序为 重置 / 取消 / 确定
+@Composable
+private fun TimeFieldDialog(
+    field: TimeField,
+    initialValue: String,
+    onDismiss: () -> Unit,
+    onReset: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var input by remember { mutableStateOf(initialValue) }
+    val focusRequester = remember { FocusRequester() }
+
+    // 打开弹窗后自动聚焦并弹出数字键盘
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 40.dp),
+            shape = MaterialTheme.shapes.extraLarge,
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 12.dp)
+            ) {
+                Text(
+                    text = stringResource(
+                        if (field == TimeField.HOUR) {
+                            R.string.dialog_time_hour_title
+                        } else {
+                            R.string.dialog_time_minute_title
+                        }
+                    ),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 输入框只保留数字字符，不限制长度
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { value -> input = value.filter { it in '0'..'9' } },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    textStyle = MaterialTheme.typography.headlineSmall
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onReset) {
+                        Text(stringResource(R.string.action_reset))
+                    }
+                    TextButton(onClick = onDismiss) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                    TextButton(onClick = { onConfirm(input) }) {
+                        Text(stringResource(R.string.action_confirm))
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -337,7 +590,6 @@ fun openAccessibilitySettings(context: Context) {
 }
 
 fun openNotifSetting(activity: Activity) {
-//    Prefs.saveHasRequestedNotifPermission(activity, true)
     NotificationPermission.request(activity)
 }
 
