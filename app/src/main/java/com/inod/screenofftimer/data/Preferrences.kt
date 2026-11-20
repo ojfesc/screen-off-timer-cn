@@ -35,7 +35,7 @@ object Prefs {
     data class AllSettings(
         val theme: ThemeMode = ThemeMode.SYSTEM,
         val isRunning: Boolean = false,
-        val leftSeconds: Int = 300,
+        val leftSeconds: Int = 0,
         val minutes: Int = 0,
         val accessibility: Boolean = false,
         val deviceAdmin: Boolean = false,
@@ -47,8 +47,8 @@ object Prefs {
         val isDynamicColor: Boolean = false,
         val isNotifPermission: Boolean = false,
         val isNoShowNotif: Boolean = false,
-        val startedSeconds: Int = 300,
-        val lastDrag: Int = 300,
+        val startedSeconds: Int = 0,
+        val lastDrag: Int = 0,
         val hasReqNotif: Boolean = false,
     )
 
@@ -65,9 +65,9 @@ object Prefs {
                 ThemeMode.SYSTEM
             },
             isRunning = all[KEY_IS_RUNNING] as? Boolean ?: false,
-            leftSeconds = all[KEY_LEFT_SECONDS] as? Int ?: 300,
-            startedSeconds = all[KEY_STARTED_SECONDS] as? Int ?: 300,
-            lastDrag = all[KEY_LAST_DRAG] as? Int ?: 300,
+            leftSeconds = all[KEY_LEFT_SECONDS] as? Int ?: 0,
+            startedSeconds = all[KEY_STARTED_SECONDS] as? Int ?: 0,
+            lastDrag = all[KEY_LAST_DRAG] as? Int ?: 0,
             minutes = all[KEY_MINUTES] as? Int ?: 0,
             accessibility = all[KEY_ACCESSIBILITY] as? Boolean ?: false,
             deviceAdmin = all[KEY_DEVICE_ADMIN] as? Boolean ?: false,
@@ -104,7 +104,7 @@ object Prefs {
         prefs(context).edit { putInt(KEY_LEFT_SECONDS, seconds) }
     }
 
-    fun getLeftSeconds(context: Context): Int = prefs(context).getInt(KEY_LEFT_SECONDS, 300)
+    fun getLeftSeconds(context: Context): Int = prefs(context).getInt(KEY_LEFT_SECONDS, 0)
 
     fun saveStartedSeconds(context: Context, seconds: Int) {
         prefs(context).edit { putInt(KEY_STARTED_SECONDS, seconds) }
@@ -114,9 +114,9 @@ object Prefs {
         prefs(context).edit { putInt(KEY_LAST_DRAG, seconds) }
     }
 
-    fun getStartedSeconds(context: Context): Int = prefs(context).getInt(KEY_STARTED_SECONDS, 300)
+    fun getStartedSeconds(context: Context): Int = prefs(context).getInt(KEY_STARTED_SECONDS, 0)
 
-    fun getLastDrag(context: Context): Int = prefs(context).getInt(KEY_LAST_DRAG, 300)
+    fun getLastDrag(context: Context): Int = prefs(context).getInt(KEY_LAST_DRAG, 0)
 
     fun saveMinutes(context: Context, minutes: Int) {
         prefs(context).edit { putInt(KEY_MINUTES, minutes) }
