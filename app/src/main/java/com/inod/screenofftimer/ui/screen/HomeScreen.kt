@@ -73,6 +73,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.inod.screenofftimer.R
 import com.inod.screenofftimer.core.permission.AccessibilityPermission
 import com.inod.screenofftimer.core.permission.NotificationPermission
+import com.inod.screenofftimer.data.Prefs
 import com.inod.screenofftimer.service.isDpmActive
 import com.inod.screenofftimer.service.requestDeviceAdmin
 import com.inod.screenofftimer.ui.components.ModalDialog
@@ -106,11 +107,24 @@ fun HomeScreen(
     val isStopMedia = settings.isStopMedia
     val lockScreenEnabled = viewModel.isLockScreen
 
-    // 倒计时总秒数：运行时由服务每秒广播刷新，空闲时来自本地配置
+    // 输入的小时数单独保存：剩余时长仍包含这部分小时时，小时保持不变，分钟不进位
+    val inputHours = settings.inputHours
     val totalSeconds = viewModel.leftSeconds.coerceAtLeast(0)
-    val hours = totalSeconds / 3600
-    val minutes = (totalSeconds % 3600) / 60
-    val seconds = totalSeconds % 60
+    val hoursPartSeconds = inputHours.toLong() * 3600L
+
+    val displayHours: Int
+    val displayMinutes: Int
+    val displaySeconds: Int
+    if (totalSeconds.toLong() >= hoursPartSeconds) {
+        val restSeconds = totalSeconds.toLong() - hoursPartSeconds
+        displayHours = inputHours
+        displayMinutes = (restSeconds / 60).toInt()
+        displaySeconds = (restSeconds % 60).toInt()
+    } else {
+        displayHours = totalSeconds / 3600
+        displayMinutes = (totalSeconds % 3600) / 60
+        displaySeconds = totalSeconds % 60
+    }
 
     val focusManager = LocalFocusManager.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -195,11 +209,12 @@ fun HomeScreen(
         }
     }
 
-    // 重置键：停止计时并把时间清空为默认的空
+    // 重置键：停止计时、清空时间，并清除输入的小时数
     val handleReset: () -> Unit = {
         if (isRunning) {
             viewModel.stop(totalSeconds)
         }
+        Prefs.saveInputHours(context, 0)
         applyTotalSeconds(0)
     }
 
@@ -271,9 +286,9 @@ fun HomeScreen(
         ) {
             Spacer(modifier = Modifier.height(32.dp))
 
-            // 小时输入框：空值显示 0，点击后在弹窗内输入，运行中不可修改
+            // 小时输入框：显示输入的小时数，运行中不可修改
             TimeValueRow(
-                value = hours.toString(),
+                value = displayHours.toString(),
                 unit = stringResource(R.string.home_hour_unit),
                 enabled = !isRunning,
                 onClick = { editingField = TimeField.HOUR }
@@ -281,9 +296,9 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 分钟输入框：空值显示 0，点击后在弹窗内输入，运行中不可修改
+            // 分钟输入框：超过 59 也不进位，运行中不可修改
             TimeValueRow(
-                value = minutes.toString(),
+                value = displayMinutes.toString(),
                 unit = stringResource(R.string.home_min_unit),
                 enabled = !isRunning,
                 onClick = { editingField = TimeField.MINUTE }
@@ -298,7 +313,7 @@ fun HomeScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = seconds.toString(),
+                        text = displaySeconds.toString(),
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -438,31 +453,38 @@ fun HomeScreen(
             show = showLockMethodDialog
         )
 
-        // 小时/分钟输入弹窗：主页显示 0 时，输入框仍为空白
+        // 小时/分钟输入弹窗：输入框打开时整体选中已有数字
         val field = editingField
         if (field != null) {
             TimeFieldDialog(
                 field = field,
                 initialValue = when (field) {
-                    TimeField.HOUR -> if (hours > 0) hours.toString() else ""
-                    TimeField.MINUTE -> if (minutes > 0) minutes.toString() else ""
+                    TimeField.HOUR -> if (displayHours > 0) displayHours.toString() else ""
+                    TimeField.MINUTE -> if (displayMinutes > 0) displayMinutes.toString() else ""
                 },
                 onDismiss = { editingField = null },
                 onConfirm = { raw ->
-                    // 确定：写入输入框的数值，超出 Int 秒上限时按上限截断
+                    // 确定：只替换当前编辑的单位，另一个单位保持屏幕上的值
                     val parsed = raw.toLongOrNull() ?: Long.MAX_VALUE
-                    val total = when (field) {
+                    when (field) {
                         TimeField.HOUR -> {
-                            val hourValue = parsed.coerceAtMost(MAX_HOURS)
-                            hourValue * 3600L + minutes * 60L
+                            val hourValue = parsed.coerceAtMost(MAX_HOURS).toInt()
+                            val total = (hourValue.toLong() * 3600L + displayMinutes.toLong() * 60L)
+                                .coerceAtMost(Int.MAX_VALUE.toLong())
+                                .toInt()
+                            Prefs.saveInputHours(context, hourValue)
+                            applyTotalSeconds(total)
                         }
 
                         TimeField.MINUTE -> {
-                            val minuteValue = parsed.coerceAtMost(MAX_MINUTES)
-                            hours * 3600L + minuteValue * 60L
+                            val minuteValue = parsed.coerceAtMost(MAX_MINUTES).toInt()
+                            val total = (displayHours.toLong() * 3600L + minuteValue.toLong() * 60L)
+                                .coerceAtMost(Int.MAX_VALUE.toLong())
+                                .toInt()
+                            Prefs.saveInputHours(context, displayHours)
+                            applyTotalSeconds(total)
                         }
                     }
-                    applyTotalSeconds(total.coerceAtMost(Int.MAX_VALUE.toLong()).toInt())
                     editingField = null
                 }
             )
