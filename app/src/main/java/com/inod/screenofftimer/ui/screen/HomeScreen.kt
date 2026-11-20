@@ -86,11 +86,8 @@ private enum class TimeField { HOUR, MINUTE }
 private const val MAX_HOURS = 596_523L
 private const val MAX_MINUTES = 35_791_394L
 
-// 时间区域的固定尺寸：数字槽、单位文字宽度、整行宽度
-// 三行使用同一行宽，保证小时、分钟、秒的数字中心落在同一条竖线上
+// 时间数字所在区域的固定宽度，三行共用，保证数字中心落在同一条竖线上
 private val TIME_SLOT_WIDTH = 200.dp
-private val TIME_LABEL_WIDTH = 88.dp
-private val TIME_ROW_WIDTH = 300.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -292,11 +289,8 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 秒读数：随倒计时每秒变化，数字与上方两个输入框中心对齐
-            Row(
-                modifier = Modifier.width(TIME_ROW_WIDTH),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            // 秒读数：结构与上面两行一致，数字与输入框中心对齐，整行随内容居中
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier.width(TIME_SLOT_WIDTH),
                     contentAlignment = Alignment.Center
@@ -311,7 +305,6 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = stringResource(R.string.home_second_unit),
-                    modifier = Modifier.width(TIME_LABEL_WIDTH),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -484,8 +477,8 @@ fun HomeScreen(
     }
 }
 
-// 单个时间单位的显示行：左侧固定宽度数值框，右侧固定宽度单位文字
-// 行宽固定，三行的数字中心与单位起点因此保持对齐
+// 单个时间单位的显示行：固定宽度的数值框 + 单位文字
+// 行宽由数值框和单位文字共同决定，三行宽度一致时整行居中即左右间距相等
 @Composable
 private fun TimeValueRow(
     value: String,
@@ -493,10 +486,7 @@ private fun TimeValueRow(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier.width(TIME_ROW_WIDTH),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
                 .width(TIME_SLOT_WIDTH)
@@ -520,7 +510,6 @@ private fun TimeValueRow(
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = unit,
-            modifier = Modifier.width(TIME_LABEL_WIDTH),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
