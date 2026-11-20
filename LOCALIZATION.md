@@ -16,9 +16,9 @@
 
 | 项目 | 数量 |
 |---|---|
-| 修改的 Kotlin 文件 | 9 个 |
-| 代码中资源引用点 | 63 处 |
-| 新增字符串资源 | 64 条（中英各 64 条，完全对齐） |
+| 修改的 Kotlin 文件 | 8 个 |
+| 代码中资源引用点 | 68 处 |
+| 新增字符串资源 | 71 条（中英各 71 条，完全对齐） |
 | 新增目录 | `app/src/main/res/values-zh-rCN/` |
 
 ## 文件改动清单
@@ -27,22 +27,33 @@
 
 | 文件 | 说明 |
 |---|---|
-| `app/src/main/res/values-zh-rCN/strings.xml` | 简体中文文案，64 条 |
+| `app/src/main/res/values-zh-rCN/strings.xml` | 简体中文文案，71 条 |
 
 ### 修改文件
 
 | 文件 | 引用数 | 改动内容 |
 |---|---|---|
 | `ui/screen/SettingsScreen.kt` | 33 | 设置页全部文案；主题选项数据结构重构 |
-| `ui/screen/HomeScreen.kt` | 17 | 顶栏、开关项、两个弹窗、Toast |
+| `ui/screen/HomeScreen.kt` | 23 | 顶栏、时间输入框与输入弹窗、开关项、两个权限弹窗、Toast |
 | `core/notification/DefaultNotification.kt` | 5 | 通知标题、倒计时文本、3 个操作按钮 |
 | `ScreenOffTimerApp.kt` | 2 | 通知渠道名称与描述 |
 | `utils/MediaUtils.kt` | 2 | 返回桌面的兜底通知 |
 | `service/MyDeviceAdminReceiver.kt` | 1 | 设备管理员授权说明 |
 | `ui/components/settings/ListSection.kt` | 1 | 图标无障碍描述 |
 | `ui/screen/LibrariesScreen.kt` | 1 | 开源库页面标题 |
-| `ui/components/timer/TimerProgress.kt` | 1 | 倒计时单位文本 |
-| `res/values/strings.xml` | — | 英文基准扩充，由 4 条增至 64 条 |
+| `res/values/strings.xml` | — | 英文基准扩充，由 4 条增至 71 条 |
+
+## 主页改版后的文案调整
+
+主页由「圆环拖拽 + 预设按钮」改为「小时/分钟输入框 + 秒读数 + 重置键」，新增 7 条资源：
+
+| 资源 | 用途 |
+|---|---|
+| `home_hour_unit`、`home_min_unit`、`home_second_unit` | 输入框与秒读数的单位文字 |
+| `dialog_time_hour_title`、`dialog_time_minute_title` | 时间输入弹窗标题 |
+| `action_reset`、`action_confirm` | 弹窗的「重置」「确定」按钮 |
+
+原 `timer_unit` 仅被已删除的 `ui/components/timer/TimerProgress.kt` 引用，现保留在资源文件中但不再使用。
 
 ## 关键技术要点
 
@@ -131,10 +142,10 @@ val descriptionText = buildAnnotatedString {
 
 | 前缀 | 用途 | 示例 |
 |---|---|---|
-| `home_` | 主界面 | `home_title` |
+| `home_` | 主界面 | `home_title`、`home_hour_unit` |
 | `settings_` | 设置项 | `settings_go_home_title` |
-| `dialog_` | 弹窗 | `dialog_lock_method_title` |
-| `action_` | 按钮 | `action_agree`、`action_cancel` |
+| `dialog_` | 弹窗 | `dialog_lock_method_title`、`dialog_time_hour_title` |
+| `action_` | 按钮 | `action_agree`、`action_cancel`、`action_reset`、`action_confirm` |
 | `notification_` | 通知 | `notification_title` |
 | `theme_` | 主题选项 | `theme_light` |
 | `option_` | 功能开关 | `option_lock_screen_title` |
@@ -148,8 +159,8 @@ val descriptionText = buildAnnotatedString {
 
 改动完成后进行的静态校验：
 
-- 中英文资源 key 数量一致（64 / 64），无缺失、无冗余、无重复
-- 代码引用的 60 个 key 全部存在，无悬空引用
+- 中英文资源 key 数量一致（71 / 71），无缺失、无冗余、无重复
+- 代码引用的 66 个 key 全部存在，无悬空引用
 - 所有含 `stringResource` 的文件均已正确 import
 - 扫描全部 Kotlin 源码，未发现残留的英文 UI 字面量
 - XML 中无未转义的裸 `&` 字符
