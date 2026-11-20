@@ -28,6 +28,7 @@ object Prefs {
     private const val KEY_LEFT_SECONDS = "left_seconds"
     private const val KEY_STARTED_SECONDS = "started_seconds"
     private const val KEY_LAST_DRAG = "last_drag"
+    private const val KEY_INPUT_HOURS = "input_hours"
 
     private const val KEY_MINUTES = "minutes"
     private const val KEY_IS_RUNNING = "is_running"
@@ -49,6 +50,7 @@ object Prefs {
         val isNoShowNotif: Boolean = false,
         val startedSeconds: Int = 0,
         val lastDrag: Int = 0,
+        val inputHours: Int = 0,
         val hasReqNotif: Boolean = false,
     )
 
@@ -68,6 +70,7 @@ object Prefs {
             leftSeconds = all[KEY_LEFT_SECONDS] as? Int ?: 0,
             startedSeconds = all[KEY_STARTED_SECONDS] as? Int ?: 0,
             lastDrag = all[KEY_LAST_DRAG] as? Int ?: 0,
+            inputHours = all[KEY_INPUT_HOURS] as? Int ?: 0,
             minutes = all[KEY_MINUTES] as? Int ?: 0,
             accessibility = all[KEY_ACCESSIBILITY] as? Boolean ?: false,
             deviceAdmin = all[KEY_DEVICE_ADMIN] as? Boolean ?: false,
@@ -114,9 +117,15 @@ object Prefs {
         prefs(context).edit { putInt(KEY_LAST_DRAG, seconds) }
     }
 
+    fun saveInputHours(context: Context, hours: Int) {
+        prefs(context).edit { putInt(KEY_INPUT_HOURS, hours) }
+    }
+
     fun getStartedSeconds(context: Context): Int = prefs(context).getInt(KEY_STARTED_SECONDS, 0)
 
     fun getLastDrag(context: Context): Int = prefs(context).getInt(KEY_LAST_DRAG, 0)
+
+    fun getInputHours(context: Context): Int = prefs(context).getInt(KEY_INPUT_HOURS, 0)
 
     fun saveMinutes(context: Context, minutes: Int) {
         prefs(context).edit { putInt(KEY_MINUTES, minutes) }
