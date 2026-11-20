@@ -19,6 +19,17 @@
     <string name="option_lock_screen_title">Lock Screen</string>
     <string name="option_lock_screen_desc">Automatically lock the device screen</string>
 
+    <!-- 主界面时间输入 -->
+    <string name="home_hour_unit">hour</string>
+    <string name="home_min_unit">min</string>
+    <string name="home_second_unit">second</string>
+    <string name="dialog_time_hour_title">Set hour</string>
+    <string name="dialog_time_minute_title">Set minute</string>
+
+    <!-- 通用按钮补充 -->
+    <string name="action_reset">Reset</string>
+    <string name="action_confirm">OK</string>
+
     <!-- 通知权限弹窗 -->
     <string name="dialog_notif_permission_title">Notification Permission Required</string>
     <string name="dialog_notif_permission_desc">Notification permission is required to display real-time countdown updates and ensure the timer runs reliably in the background, please enable notifications.</string>
