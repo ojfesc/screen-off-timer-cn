@@ -60,8 +60,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -289,7 +291,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 秒读数：结构与上面两行一致，数字与输入框中心对齐，整行随内容居中
+            // 秒读数：与上面两行同样的结构，整行按内容居中
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier.width(TIME_SLOT_WIDTH),
@@ -305,7 +307,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = stringResource(R.string.home_second_unit),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -446,15 +448,6 @@ fun HomeScreen(
                     TimeField.MINUTE -> if (minutes > 0) minutes.toString() else ""
                 },
                 onDismiss = { editingField = null },
-                onReset = {
-                    // 重置：当前编辑的单位清空为默认的空，并关闭弹窗
-                    val restSeconds = when (field) {
-                        TimeField.HOUR -> minutes * 60
-                        TimeField.MINUTE -> hours * 3600
-                    }
-                    applyTotalSeconds(restSeconds)
-                    editingField = null
-                },
                 onConfirm = { raw ->
                     // 确定：写入输入框的数值，超出 Int 秒上限时按上限截断
                     val parsed = raw.toLongOrNull() ?: Long.MAX_VALUE
@@ -478,7 +471,7 @@ fun HomeScreen(
 }
 
 // 单个时间单位的显示行：固定宽度的数值框 + 单位文字
-// 行宽由数值框和单位文字共同决定，三行宽度一致时整行居中即左右间距相等
+// 整行按内容宽度居中，左右留白相等；秒行单位只有一字，整行略窄，数字会比另外两行右移约 8dp
 @Composable
 private fun TimeValueRow(
     value: String,
@@ -516,21 +509,32 @@ private fun TimeValueRow(
     }
 }
 
-// 时间输入弹窗：一个数字输入框，按钮顺序为 重置 / 取消 / 确定
+// 时间输入弹窗：数字输入框，按钮为 取消 / 确定
+// 输入框打开时整体选中已有内容，直接输入即可覆盖
 @Composable
 private fun TimeFieldDialog(
     field: TimeField,
     initialValue: String,
     onDismiss: () -> Unit,
-    onReset: () -> Unit,
     onConfirm: (String) -> Unit
 ) {
-    var input by remember { mutableStateOf(initialValue) }
+    // 用 TextFieldValue 携带全选区间，首次组合时内容处于选中状态
+    var input by remember {
+        mutableStateOf(
+            TextFieldValue(
+                text = initialValue,
+                selection = TextRange(0, initialValue.length)
+            )
+        )
+    }
     val focusRequester = remember { FocusRequester() }
 
-    // 打开弹窗后自动聚焦并弹出数字键盘
+    // 打开弹窗后自动聚焦，聚焦完成后再确保整段内容处于选中状态
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
+        if (input.text.isNotEmpty()) {
+            input = input.copy(selection = TextRange(0, input.text.length))
+        }
     }
 
     Dialog(
@@ -566,7 +570,17 @@ private fun TimeFieldDialog(
                 // 输入框只保留数字字符，不限制长度
                 OutlinedTextField(
                     value = input,
-                    onValueChange = { value -> input = value.filter { it in '0'..'9' } },
+                    onValueChange = { value ->
+                        val digits = value.text.filter { it in '0'..'9' }
+                        input = if (digits == value.text) {
+                            value
+                        } else {
+                            TextFieldValue(
+                                text = digits,
+                                selection = TextRange(digits.length)
+                            )
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester),
@@ -582,13 +596,10 @@ private fun TimeFieldDialog(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onReset) {
-                        Text(stringResource(R.string.action_reset))
-                    }
                     TextButton(onClick = onDismiss) {
                         Text(stringResource(R.string.action_cancel))
                     }
-                    TextButton(onClick = { onConfirm(input) }) {
+                    TextButton(onClick = { onConfirm(input.text) }) {
                         Text(stringResource(R.string.action_confirm))
                     }
                 }
