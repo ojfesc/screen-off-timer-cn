@@ -19,6 +19,17 @@
     <string name="option_lock_screen_title">锁定屏幕</string>
     <string name="option_lock_screen_desc">到时自动锁定设备屏幕</string>
 
+    <!-- 主界面时间输入 -->
+    <string name="home_hour_unit">小时</string>
+    <string name="home_min_unit">分钟</string>
+    <string name="home_second_unit">秒</string>
+    <string name="dialog_time_hour_title">设置小时</string>
+    <string name="dialog_time_minute_title">设置分钟</string>
+
+    <!-- 通用按钮补充 -->
+    <string name="action_reset">重置</string>
+    <string name="action_confirm">确定</string>
+
     <!-- 通知权限弹窗 -->
     <string name="dialog_notif_permission_title">需要通知权限</string>
     <string name="dialog_notif_permission_desc">需要通知权限才能显示实时倒计时，并确保定时器在后台可靠运行，请开启通知权限。</string>
