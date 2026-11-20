@@ -464,8 +464,8 @@ fun HomeScreen(
                 },
                 onDismiss = { editingField = null },
                 onConfirm = { raw ->
-                    // 确定：只替换当前编辑的单位，另一个单位保持屏幕上的值
-                    val parsed = raw.toLongOrNull() ?: Long.MAX_VALUE
+                    // 确定：空输入按 0 处理，超长数字按上限截断
+                    val parsed = if (raw.isEmpty()) 0L else (raw.toLongOrNull() ?: Long.MAX_VALUE)
                     when (field) {
                         TimeField.HOUR -> {
                             val hourValue = parsed.coerceAtMost(MAX_HOURS).toInt()
