@@ -33,7 +33,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -86,6 +85,12 @@ private enum class TimeField { HOUR, MINUTE }
 // 单个输入框允许的最大值，保证换算后的总秒数不超过 Int 上限
 private const val MAX_HOURS = 596_523L
 private const val MAX_MINUTES = 35_791_394L
+
+// 时间区域的固定尺寸：数字槽、单位文字宽度、整行宽度
+// 三行使用同一行宽，保证小时、分钟、秒的数字中心落在同一条竖线上
+private val TIME_SLOT_WIDTH = 200.dp
+private val TIME_LABEL_WIDTH = 88.dp
+private val TIME_ROW_WIDTH = 300.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -217,6 +222,18 @@ fun HomeScreen(
         }
     }
 
+    // 两个按钮使用同一组配色：运行时为停止色，空闲时为主色
+    val buttonContainerColor = if (isRunning) {
+        MaterialTheme.colorScheme.errorContainer
+    } else {
+        MaterialTheme.colorScheme.primaryContainer
+    }
+    val buttonContentColor = if (isRunning) {
+        MaterialTheme.colorScheme.onErrorContainer
+    } else {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
@@ -255,9 +272,9 @@ fun HomeScreen(
         ) {
             Spacer(modifier = Modifier.height(32.dp))
 
-            // 小时输入框：点击后在弹窗内输入，运行中不可修改
+            // 小时输入框：空值显示 0，点击后在弹窗内输入，运行中不可修改
             TimeValueRow(
-                value = if (totalSeconds <= 0) "" else hours.toString(),
+                value = hours.toString(),
                 unit = stringResource(R.string.home_hour_unit),
                 enabled = !isRunning,
                 onClick = { editingField = TimeField.HOUR }
@@ -265,9 +282,9 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 分钟输入框：点击后在弹窗内输入，运行中不可修改
+            // 分钟输入框：空值显示 0，点击后在弹窗内输入，运行中不可修改
             TimeValueRow(
-                value = if (totalSeconds <= 0) "" else minutes.toString(),
+                value = minutes.toString(),
                 unit = stringResource(R.string.home_min_unit),
                 enabled = !isRunning,
                 onClick = { editingField = TimeField.MINUTE }
@@ -275,17 +292,26 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 秒读数：随倒计时每秒变化，空闲时显示 0
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = seconds.toString(),
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.width(8.dp))
+            // 秒读数：随倒计时每秒变化，数字与上方两个输入框中心对齐
+            Row(
+                modifier = Modifier.width(TIME_ROW_WIDTH),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier.width(TIME_SLOT_WIDTH),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = seconds.toString(),
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = stringResource(R.string.home_second_unit),
+                    modifier = Modifier.width(TIME_LABEL_WIDTH),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -298,36 +324,32 @@ fun HomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // 重置键：停止计时并清空小时与分钟
-                FilledTonalIconButton(
+                FilledIconButton(
                     onClick = handleReset,
                     enabled = isRunning || totalSeconds > 0,
-                    modifier = Modifier.size(64.dp),
-                    shape = RoundedCornerShape(20.dp)
+                    modifier = Modifier.size(80.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = buttonContainerColor,
+                        contentColor = buttonContentColor
+                    )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
                         contentDescription = stringResource(R.string.action_reset),
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(40.dp)
                     )
                 }
 
-                // 播放/停止键：运行中切换为停止图标并使用错误色
+                // 播放/停止键：与重置键同尺寸同配色，运行中切换为停止图标
                 FilledIconButton(
                     onClick = { handleStartStop() },
                     enabled = isRunning || totalSeconds > 0,
                     modifier = Modifier.size(80.dp),
                     shape = RoundedCornerShape(24.dp),
                     colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = if (isRunning) {
-                            MaterialTheme.colorScheme.errorContainer
-                        } else {
-                            MaterialTheme.colorScheme.primaryContainer
-                        },
-                        contentColor = if (isRunning) {
-                            MaterialTheme.colorScheme.onErrorContainer
-                        } else {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        }
+                        containerColor = buttonContainerColor,
+                        contentColor = buttonContentColor
                     )
                 ) {
                     AnimatedContent(targetState = isRunning, label = "icon_anim") { running ->
@@ -421,7 +443,7 @@ fun HomeScreen(
             show = showLockMethodDialog
         )
 
-        // 小时/分钟输入弹窗
+        // 小时/分钟输入弹窗：主页显示 0 时，输入框仍为空白
         val field = editingField
         if (field != null) {
             TimeFieldDialog(
@@ -462,7 +484,8 @@ fun HomeScreen(
     }
 }
 
-// 单个时间单位的显示行：左侧数值框，右侧单位文字
+// 单个时间单位的显示行：左侧固定宽度数值框，右侧固定宽度单位文字
+// 行宽固定，三行的数字中心与单位起点因此保持对齐
 @Composable
 private fun TimeValueRow(
     value: String,
@@ -470,10 +493,13 @@ private fun TimeValueRow(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = Modifier.width(TIME_ROW_WIDTH),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Box(
             modifier = Modifier
-                .width(200.dp)
+                .width(TIME_SLOT_WIDTH)
                 .height(64.dp)
                 .clip(MaterialTheme.shapes.large)
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
@@ -494,6 +520,7 @@ private fun TimeValueRow(
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = unit,
+            modifier = Modifier.width(TIME_LABEL_WIDTH),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
