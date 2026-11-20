@@ -22,7 +22,7 @@
     <!-- 主界面时间输入 -->
     <string name="home_hour_unit">小时</string>
     <string name="home_min_unit">分钟</string>
-    <string name="home_second_unit">秒</string>
+    <string name="home_second_unit">秒钟</string>
     <string name="dialog_time_hour_title">设置小时</string>
     <string name="dialog_time_minute_title">设置分钟</string>
 
