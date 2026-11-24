@@ -32,7 +32,6 @@
 
     <!-- 电池优化权限弹窗 -->
     <string name="dialog_battery_title">Grant battery optimization exemption first</string>
-    <string name="dialog_battery_desc">The countdown has to keep running in the background. While the app is battery-optimized the system freezes it, the countdown stops and the screen never turns off. Open App info, set the battery usage of this app to unrestricted, then come back.</string>
     <string name="action_go">Go</string>
 
     <!-- 通知权限弹窗 -->
@@ -79,30 +78,3 @@
     <string name="settings_section_info">Info</string>
     <string name="settings_donate_title">Donate</string>
     <string name="settings_donate_desc">Support me :)</string>
-    <string name="settings_libraries_title">Open-source Libraries</string>
-    <string name="settings_libraries_desc">Open-source Libraries used in this app</string>
-
-    <!-- 设备管理员权限弹窗 -->
-    <string name="dialog_device_admin_title">Device Admin Permission</string>
-    <string name="dialog_device_admin_desc_body">Device Admin permission is used to lock the device\n\n</string>
-    <string name="dialog_device_admin_desc_line1">* No collect, store, or share any personal information.\n</string>
-    <string name="dialog_device_admin_desc_line2">* Disable this permission, if you want to uninstall the app.</string>
-
-    <!-- 其他 -->
-    <string name="options_content_desc">Options</string>
-    <string name="libraries_title">Open-source Libraries</string>
-
-    <!-- 通知 -->
-    <string name="notification_channel_name">Sleep Timer</string>
-    <string name="notification_channel_desc">Notification Timer</string>
-    <string name="notification_title">Sleep Timer</string>
-    <string name="notification_content_sleep_in">Sleep in %1$s</string>
-    <string name="notification_action_stop">STOP</string>
-    <string name="notification_action_reduce">- 10 Min</string>
-    <string name="notification_action_add">+ 10 Min</string>
-    <string name="notification_go_home_title">Sleep Timer</string>
-    <string name="notification_go_home_content">Tap to return to the home screen</string>
-
-    <!-- 设备管理员请求说明 -->
-    <string name="device_admin_request_explain">Required to lock screen automatically</string>
-</resources>
