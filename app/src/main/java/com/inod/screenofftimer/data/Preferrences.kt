@@ -118,6 +118,8 @@ object Prefs {
 
     fun getEndTime(context: Context): Long = prefs(context).getLong(KEY_END_TIME, 0L)
 
+    fun getLeftSeconds(context: Context): Int = prefs(context).getInt(KEY_LEFT_SECONDS, 0)
+
     fun saveStartedSeconds(context: Context, seconds: Int) {
         prefs(context).edit { putInt(KEY_STARTED_SECONDS, seconds) }
     }
