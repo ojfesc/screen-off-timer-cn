@@ -97,10 +97,7 @@ class TimerViewModel(
         loadInitialSettings()
     }
 
-    // 界面回到前台时与服务对齐：没有计时刻表就不启动服务，避免每次进入界面都闪一下前台通知
     fun reconcileTimerState() {
-        if (Prefs.getEndTime(context) <= 0L && !Prefs.isRunning(context)) return
-
         val intent = Intent(application, TimerService::class.java)
         application.startService(intent)
     }
@@ -138,10 +135,8 @@ class TimerViewModel(
                 isNotifPermission = settings.isNotifPermission
                 isNoShowNotifPermission = settings.isNoShowNotif
 
-                // 有运行标记，或还有未完成的截止时间，都要让服务按截止时间接上：
-                // 进程被系统回收后剩余时间只能靠截止时间续算，只看运行标记会漏掉已到期的这次熄屏
-                if (isRunning || Prefs.getEndTime(context) > 0L) {
-                    reconcileTimerState()
+                if (isRunning) {
+                    reconcileTimerState()   // resume
                 }
             }
         }
@@ -154,18 +149,13 @@ class TimerViewModel(
         Prefs.saveTheme(context, value)
     }
 
-    // 只在状态真的变化时写盘，避免每秒的计时回调反复触发界面与偏好监听的连锁刷新
     fun updateRunning(value: Boolean) {
-        if (isRunning != value) isRunning = value
+        isRunning = value
         state["is_running"] = value
-        if (Prefs.isRunning(context) != value) {
-            Prefs.saveRunning(context, value)
-        }
+        Prefs.saveRunning(context, value)
     }
 
     fun updateLeftSeconds(value: Int) {
-        if (leftSeconds == value && Prefs.getLeftSeconds(context) == value) return
-
         leftSeconds = value
         state["left_seconds"] = value
         Prefs.saveLeftSeconds(context, value)
@@ -271,17 +261,13 @@ class TimerViewModel(
     }
 
     //timer logic and broadcast
-    // 计时服务每秒广播剩余秒数；这里不再用本地 isRunning 过滤，
-    // 否则本地状态一旦与真实服务不同步，界面就会停在最后一个数字上
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
-            if (intent?.action != "TIMER_TICK") return
-
-            val seconds = intent.getIntExtra("time_left", 0)
-            updateLeftSeconds(seconds)
-
-            if (seconds <= 0 && isRunning) {
-                updateRunning(false)
+            if (intent?.action == "TIMER_TICK") {
+                if (!isRunning) return
+                val seconds = intent.getIntExtra("time_left", 0)
+                updateLeftSeconds(seconds)
+                if (seconds <= 0) updateRunning(false)
             }
         }
     }
@@ -324,6 +310,7 @@ class TimerViewModel(
         updateMinutes(min)
         updateLeftSeconds(min * 60)
         updateStartedSeconds(min * 60)
+//        updateTimer(application, min)
         if (isRunning) {
             updateTimer(application, min)
         }
@@ -332,17 +319,13 @@ class TimerViewModel(
     fun saveLastDrag(minutes: Int) {
         Prefs.saveLastDrag(getApplication(), minutes * 60)
     }
-
-    // 运行中改时长：服务会以新时长继续计时，本地状态保持运行中，不能把计时标记提前清掉
     fun updateTimer(context: Context, minutes: Int) {
-        val duration = minutes * 60
         val intent = Intent(context, TimerService::class.java).apply {
-            putExtra("time", duration)
+            putExtra("time", minutes * 60)
             action = TimerService.ACTION_UPDATE
         }
-        updateLeftSeconds(duration)
-        updateRunning(true)
-        ContextCompat.startForegroundService(context, intent)
+        updateRunning(false)
+        context.startService(intent)
     }
 
     fun stop(seconds: Int) {
@@ -353,7 +336,7 @@ class TimerViewModel(
     fun stopTimer(context: Context, seconds: Int) {
         val intent = Intent(context, TimerService::class.java).apply {
             action = TimerService.ACTION_STOP
-            putExtra("time", seconds)
+            putExtra("time", leftSeconds)
         }
         context.startService(intent)
     }
