@@ -107,17 +107,6 @@ object Prefs {
         prefs(context).edit { putInt(KEY_LEFT_SECONDS, seconds) }
     }
 
-
-    // 计时的截止时间（毫秒时间戳，0 表示当前没有计时任务）。
-    // 落盘保存而不是只放在服务内存里，服务被系统回收重建或界面重新进入时才能按真实时间续算
-    private const val KEY_END_TIME = "end_time"
-
-    fun saveEndTime(context: Context, endTimeMillis: Long) {
-        prefs(context).edit { putLong(KEY_END_TIME, endTimeMillis) }
-    }
-
-    fun getEndTime(context: Context): Long = prefs(context).getLong(KEY_END_TIME, 0L)
-
     fun getLeftSeconds(context: Context): Int = prefs(context).getInt(KEY_LEFT_SECONDS, 0)
 
     fun saveStartedSeconds(context: Context, seconds: Int) {
