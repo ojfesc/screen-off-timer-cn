@@ -32,7 +32,6 @@
 
     <!-- 电池优化权限弹窗 -->
     <string name="dialog_battery_title">请先授予电池优化权限</string>
-    <string name="dialog_battery_desc">倒计时需要一直在后台运行。应用被电池优化限制后会被系统冻结，倒计时会停在半路，到点也不会熄屏。请在应用信息页把本应用的省电策略改为无限制，然后返回。</string>
     <string name="action_go">前往</string>
 
     <!-- 通知权限弹窗 -->
@@ -79,30 +78,3 @@
     <string name="settings_section_info">关于</string>
     <string name="settings_donate_title">打赏支持</string>
     <string name="settings_donate_desc">支持一下 :)</string>
-    <string name="settings_libraries_title">开源库</string>
-    <string name="settings_libraries_desc">本应用使用的开源库</string>
-
-    <!-- 设备管理员权限弹窗 -->
-    <string name="dialog_device_admin_title">设备管理员权限</string>
-    <string name="dialog_device_admin_desc_body">设备管理员权限用于锁定设备\n\n</string>
-    <string name="dialog_device_admin_desc_line1">* 不收集、不存储、不分享任何个人信息。\n</string>
-    <string name="dialog_device_admin_desc_line2">* 如需卸载应用，请先关闭此权限。</string>
-
-    <!-- 其他 -->
-    <string name="options_content_desc">选项</string>
-    <string name="libraries_title">开源库</string>
-
-    <!-- 通知 -->
-    <string name="notification_channel_name">睡眠定时</string>
-    <string name="notification_channel_desc">定时器通知</string>
-    <string name="notification_title">睡眠定时</string>
-    <string name="notification_content_sleep_in">%1$s 后进入睡眠</string>
-    <string name="notification_action_stop">停止</string>
-    <string name="notification_action_reduce">- 10 分钟</string>
-    <string name="notification_action_add">+ 10 分钟</string>
-    <string name="notification_go_home_title">睡眠定时</string>
-    <string name="notification_go_home_content">点击返回桌面</string>
-
-    <!-- 设备管理员请求说明 -->
-    <string name="device_admin_request_explain">用于自动锁定屏幕</string>
-</resources>
