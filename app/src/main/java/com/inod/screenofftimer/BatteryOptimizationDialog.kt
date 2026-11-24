@@ -48,7 +48,7 @@ fun openAppInfoSettings(context: Context) {
     context.startActivity(intent)
 }
 
-// 电池优化门禁：没有豁免权限就显示不可关闭的弹窗，授予后自动消失
+// 电池优化门禁：没有豁免权限就显示不可关闭的弹窗，内容只有标题和【前往】按钮，授予后自动消失
 @Composable
 fun BatteryOptimizationGate(context: Context) {
     var granted by remember { mutableStateOf(isIgnoringBatteryOptimizations(context)) }
@@ -95,15 +95,7 @@ fun BatteryOptimizationGate(context: Context) {
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = stringResource(R.string.dialog_battery_desc),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 TextButton(
                     onClick = { openAppInfoSettings(context) },
