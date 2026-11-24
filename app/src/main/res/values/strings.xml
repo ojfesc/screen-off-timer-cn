@@ -30,6 +30,11 @@
     <string name="action_reset">Reset</string>
     <string name="action_confirm">OK</string>
 
+    <!-- 电池优化权限弹窗 -->
+    <string name="dialog_battery_title">Grant battery optimization exemption first</string>
+    <string name="dialog_battery_desc">The countdown has to keep running in the background. While the app is battery-optimized the system freezes it, the countdown stops and the screen never turns off. Open App info, set the battery usage of this app to unrestricted, then come back.</string>
+    <string name="action_go">Go</string>
+
     <!-- 通知权限弹窗 -->
     <string name="dialog_notif_permission_title">Notification Permission Required</string>
     <string name="dialog_notif_permission_desc">Notification permission is required to display real-time countdown updates and ensure the timer runs reliably in the background, please enable notifications.</string>
