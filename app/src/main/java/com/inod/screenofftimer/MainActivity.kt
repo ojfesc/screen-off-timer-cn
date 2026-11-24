@@ -1,8 +1,11 @@
 package com.inod.screenofftimer
 
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -71,19 +74,30 @@ class MainActivity : ComponentActivity() {
         checkServiceAnomalies()
     }
 
-    // 只清理“标记为运行、但没有截止时间、服务也不在本进程”的残留状态。
-    // 不能像以前那样只看 TimerService.isServiceRunning：进程被系统回收后该标志一定是 false，
-    // 会把仍在计时的任务误判成异常任务停掉，表现为通知倒计时停住、到点也不再熄屏
     private fun checkServiceAnomalies() {
-        if (TimerService.isServiceRunning) return
-        if (Prefs.getEndTime(this) > 0L) return
-        if (!Prefs.isRunning(this)) return
+        val isSavedAsRunning = Prefs.isRunning(this)
+        val isServiceActuallyRunning = TimerService.isServiceRunning
 
-        Prefs.saveRunning(this, false)
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val areNotificationsEnabled = notificationManager.areNotificationsEnabled()
 
-        val stopIntent = Intent(this, TimerService::class.java).apply {
-            action = TimerService.ACTION_STOP
+        if (isSavedAsRunning && (!isServiceActuallyRunning || !areNotificationsEnabled)) {
+            Prefs.saveRunning(this, false)
+//            Prefs.saveLeftSeconds(this, 0)
+
+            val stopIntent = Intent(this, TimerService::class.java).apply {
+                action = TimerService.ACTION_STOP
+            }
+            startService(stopIntent)
+
+            if (!areNotificationsEnabled) {
+                Toast.makeText(
+                    this,
+                    "Please enable notifications for the timer to run properly.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
-        startService(stopIntent)
     }
 }
