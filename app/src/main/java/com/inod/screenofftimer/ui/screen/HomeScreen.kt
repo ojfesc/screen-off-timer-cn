@@ -71,7 +71,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.inod.screenofftimer.R
 import com.inod.screenofftimer.core.permission.AccessibilityPermission
-import com.inod.screenofftimer.core.permission.NotificationPermission
 import com.inod.screenofftimer.data.Prefs
 import com.inod.screenofftimer.service.isDpmActive
 import com.inod.screenofftimer.service.requestDeviceAdmin
@@ -128,20 +127,13 @@ fun HomeScreen(
     val focusManager = LocalFocusManager.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // 通知权限弹窗：按下开始时未授权才出现，授权后自动关闭
-    var showNotifPermissionDialog by remember { mutableStateOf(false) }
-
-    // 回到前台时同步锁屏权限，并在通知权限已授予后关闭引导弹窗
+    // 回到前台时同步锁屏权限，避免界面开关与系统设置不一致
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 val a11y = isAccessibilityEnabled(context)
                 val dpmActive = isDpmActive(context)
                 viewModel.syncLockPermissions(a11y, dpmActive)
-
-                if (isNotifGranted(activity)) {
-                    showNotifPermissionDialog = false
-                }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -180,7 +172,7 @@ fun HomeScreen(
         viewModel.saveLastDrag(safeValue / 60)
     }
 
-    // 播放键：运行中停止，空闲时校验时长与通知权限后启动
+    // 播放键：运行中停止，空闲时校验时长后启动
     val handleStartStop: () -> Unit = let@{
         if (isRunning) {
             viewModel.stop(totalSeconds)
@@ -193,11 +185,6 @@ fun HomeScreen(
 
         viewModel.startTimer(totalSeconds)
         viewModel.saveLastDrag(totalSeconds / 60)
-
-        if (!isNotifGranted(activity)) {
-            showNotifPermissionDialog = true
-            return@let
-        }
 
         if (settings.isAutoCloseOnStart) {
             activity.moveTaskToBack(true)
@@ -394,17 +381,6 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
-
-        // 通知权限弹窗：与电池优化弹窗一致，只能去开启，授予后自动关闭
-        ModalDialog(
-            show = showNotifPermissionDialog,
-            title = stringResource(R.string.dialog_notif_permission_title),
-            description = stringResource(R.string.dialog_notif_permission_desc),
-            confirmText = stringResource(R.string.action_go),
-            dismissText = null,
-            onConfirm = { openNotifSetting(activity) },
-            onDismiss = {}
-        )
 
         // 锁屏方式弹窗
         ModalDialog(
@@ -615,12 +591,4 @@ fun isAccessibilityEnabled(context: Context): Boolean {
 
 fun openAccessibilitySettings(context: Context) {
     AccessibilityPermission.open(context)
-}
-
-fun openNotifSetting(activity: Activity) {
-    NotificationPermission.request(activity)
-}
-
-fun isNotifGranted(activity: Activity): Boolean {
-    return NotificationPermission.isGranted(activity)
 }
