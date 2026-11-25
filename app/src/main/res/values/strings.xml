@@ -38,7 +38,6 @@
     <!-- 通知权限弹窗 -->
     <string name="dialog_notif_permission_title">Notification Permission Required</string>
     <string name="dialog_notif_permission_desc">Notification permission is required to display real-time countdown updates and ensure the timer runs reliably in the background, please enable notifications.</string>
-    <string name="dialog_notif_permission_no_show">Don\'t show again</string>
 
     <!-- 选择锁屏方式弹窗 -->
     <string name="dialog_lock_method_title">Choose Lock Method</string>
@@ -70,15 +69,11 @@
     <string name="settings_open_app_title">Open app</string>
     <string name="settings_open_app_desc">Open this app after timer finished (requires Accessibility)</string>
     <string name="settings_section_permission">Permission</string>
-    <string name="settings_notification_title">Notification</string>
-    <string name="settings_notification_desc">Allow app to show timer and status notifications</string>
     <string name="settings_accessibility_title">Accessibility</string>
     <string name="settings_accessibility_desc">Required to control screen off and system actions</string>
     <string name="settings_device_admin_title">Device Admin</string>
     <string name="settings_device_admin_desc">Lock screen via device admin permission, disable this before uninstalling the app</string>
     <string name="settings_section_info">Info</string>
-    <string name="settings_donate_title">Donate</string>
-    <string name="settings_donate_desc">Support me :)</string>
     <string name="settings_libraries_title">Open-source Libraries</string>
     <string name="settings_libraries_desc">Open-source Libraries used in this app</string>
 
