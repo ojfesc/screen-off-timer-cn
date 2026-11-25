@@ -23,8 +23,6 @@ object Prefs {
     private const val KEY_DEVICE_ADMIN = "device_admin"
 
     private const val KEY_HAS_REQ_NOTIF = "has_req_notif"
-    private const val KEY_NOTIF_PERMISSION = "notif_permission"
-    private const val KEY_NO_SHOW_ASK_NOTIF = "no_show_ask_notif"
     private const val KEY_LEFT_SECONDS = "left_seconds"
     private const val KEY_STARTED_SECONDS = "started_seconds"
     private const val KEY_LAST_DRAG = "last_drag"
@@ -46,8 +44,6 @@ object Prefs {
         val isAutoCloseOnStart: Boolean = false,
         val openApp: Boolean = false,
         val isDynamicColor: Boolean = false,
-        val isNotifPermission: Boolean = false,
-        val isNoShowNotif: Boolean = false,
         val startedSeconds: Int = 0,
         val lastDrag: Int = 0,
         val inputHours: Int = 0,
@@ -80,9 +76,7 @@ object Prefs {
             isGoHome = all[KEY_GO_HOME] as? Boolean ?: false,
             isAutoCloseOnStart = all[KEY_AUTO_CLOSE_ON_START] as? Boolean ?: false,
             openApp = all[KEY_OPEN_APP] as? Boolean ?: false,
-            isDynamicColor = all[KEY_DYNAMIC_COLOR] as? Boolean ?: false,
-            isNotifPermission = all[KEY_NOTIF_PERMISSION] as? Boolean ?: false,
-            isNoShowNotif = all[KEY_NO_SHOW_ASK_NOTIF] as? Boolean ?: false
+            isDynamicColor = all[KEY_DYNAMIC_COLOR] as? Boolean ?: false
         )
     }
 
@@ -227,20 +221,6 @@ object Prefs {
 
     fun isDynamicColor(context: Context): Boolean =
         prefs(context).getBoolean(KEY_DYNAMIC_COLOR, false)
-
-    fun saveNotifPermission(context: Context, value: Boolean) {
-        prefs(context).edit { putBoolean(KEY_NOTIF_PERMISSION, value) }
-    }
-
-    fun isNotifPermission(context: Context): Boolean =
-        prefs(context).getBoolean(KEY_NOTIF_PERMISSION, false)
-
-    fun saveNoShowNotifPermission(context: Context, value: Boolean) {
-        prefs(context).edit { putBoolean(KEY_NO_SHOW_ASK_NOTIF, value) }
-    }
-
-    fun isNoShowNotifPermission(context: Context): Boolean =
-        prefs(context).getBoolean(KEY_NO_SHOW_ASK_NOTIF, false)
 
     fun saveHasRequestedNotifPermission(context: Context, value: Boolean) {
         prefs(context).edit { putBoolean(KEY_HAS_REQ_NOTIF, value) }
