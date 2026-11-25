@@ -33,7 +33,7 @@
     <!-- 电池优化权限弹窗 -->
     <string name="dialog_battery_title">Grant battery optimization exemption first</string>
     <string name="dialog_battery_desc">Android may freeze this app in the background, so the countdown stops and the screen will not lock on time. Set this app to Unrestricted in App info → Battery.</string>
-    <string name="action_go">Go</string>
+    <string name="action_go">Open settings</string>
 
     <!-- 通知权限弹窗 -->
     <string name="dialog_notif_permission_title">Notification Permission Required</string>
