@@ -38,7 +38,6 @@
     <!-- 通知权限弹窗 -->
     <string name="dialog_notif_permission_title">需要通知权限</string>
     <string name="dialog_notif_permission_desc">需要通知权限才能显示实时倒计时，并确保定时器在后台可靠运行，请开启通知权限。</string>
-    <string name="dialog_notif_permission_no_show">不再提示</string>
 
     <!-- 选择锁屏方式弹窗 -->
     <string name="dialog_lock_method_title">选择锁屏方式</string>
@@ -70,15 +69,11 @@
     <string name="settings_open_app_title">打开应用</string>
     <string name="settings_open_app_desc">定时结束后重新打开本应用（需要无障碍权限）</string>
     <string name="settings_section_permission">权限</string>
-    <string name="settings_notification_title">通知</string>
-    <string name="settings_notification_desc">允许应用显示定时器与状态通知</string>
     <string name="settings_accessibility_title">无障碍</string>
     <string name="settings_accessibility_desc">用于控制息屏与系统操作</string>
     <string name="settings_device_admin_title">设备管理员</string>
     <string name="settings_device_admin_desc">通过设备管理员权限锁屏，卸载前请先关闭此权限</string>
     <string name="settings_section_info">关于</string>
-    <string name="settings_donate_title">打赏支持</string>
-    <string name="settings_donate_desc">支持一下 :)</string>
     <string name="settings_libraries_title">开源库</string>
     <string name="settings_libraries_desc">本应用使用的开源库</string>
 
