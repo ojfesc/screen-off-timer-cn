@@ -411,7 +411,7 @@ fun HomeScreen(
             show = showNotifPermissionDialog,
             title = stringResource(R.string.dialog_notif_permission_title),
             description = stringResource(R.string.dialog_notif_permission_desc),
-            confirmText = stringResource(R.string.action_agree),
+            confirmText = stringResource(R.string.action_go),
             dismissText = stringResource(R.string.action_cancel),
             onConfirm = {
                 showNotifPermissionDialog = false
