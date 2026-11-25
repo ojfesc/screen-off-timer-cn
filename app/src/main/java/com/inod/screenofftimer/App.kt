@@ -22,8 +22,9 @@ fun App() {
         themeMode = settings.theme,
         useDynamicColor = settings.isDynamicColor
     ) {
-        // 放在导航图之前：没有电池优化豁免时用不可关闭的弹窗挡住整个界面
+        // 放在导航图之前：依次检查电池优化豁免与通知权限，缺哪项就用不可关闭的弹窗挡住界面
         BatteryOptimizationGate(LocalContext.current)
+        NotificationPermissionGate(LocalContext.current)
 
         AppNavGraph(
             viewModel = viewModel
