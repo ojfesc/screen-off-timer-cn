@@ -1,9 +1,6 @@
 package com.inod.screenofftimer.ui.screen
 
-import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,10 +17,8 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.outlined.Info
@@ -59,7 +54,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.inod.screenofftimer.R
 import com.inod.screenofftimer.core.permission.AccessibilityPermission
-import com.inod.screenofftimer.core.permission.NotificationPermission
 import com.inod.screenofftimer.service.isDpmActive
 import com.inod.screenofftimer.service.requestDeviceAdmin
 import com.inod.screenofftimer.ui.components.BackSource
@@ -70,7 +64,6 @@ import com.inod.screenofftimer.ui.components.settings.ListOption
 import com.inod.screenofftimer.ui.components.settings.ListSection
 import com.inod.screenofftimer.ui.ThemeMode
 import com.inod.screenofftimer.viewmodel.TimerViewModel
-import androidx.core.net.toUri
 import com.inod.screenofftimer.service.removeDeviceAdmin
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,7 +76,6 @@ fun SettingsScreen(
 ) {
 //    BackHandler { onBack() }
 
-    val activity = context as Activity
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // source from object
@@ -100,9 +92,6 @@ fun SettingsScreen(
 
                 //openApp
                 if (!a11y) viewModel.updateOpenApp(false)
-
-                val notifGranted = isNotifGranted(activity)
-                if (settings.isNotifPermission != notifGranted) viewModel.updateNotifPermission(notifGranted)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -275,19 +264,6 @@ fun SettingsScreen(
             item {
                 ListSection(title = stringResource(R.string.settings_section_permission), padding = PaddingValues(top = 10.dp), titleIcon = Icons.Default.Security) {
                     ListOption(
-                        onClick = { openNotifPermission(activity) },
-                        title = stringResource(R.string.settings_notification_title),
-                        description = stringResource(R.string.settings_notification_desc),
-                        icon = Icons.Default.Notifications,
-                        trailing = {
-                            SwitchStyle(
-                                checked = settings.isNotifPermission,
-                                onCheckedChange = { openNotifPermission(activity) }
-                            )
-                        }
-                    )
-
-                    ListOption(
                         onClick = { openAccessibility(context) },
                         title = stringResource(R.string.settings_accessibility_title),
                         description = stringResource(R.string.settings_accessibility_desc),
@@ -318,13 +294,6 @@ fun SettingsScreen(
             // info
             item {
                 ListSection(title = stringResource(R.string.settings_section_info), padding = PaddingValues(top = 10.dp, bottom = 10.dp), titleIcon = Icons.Outlined.Info) {
-                    ListOption(
-                        onClick = { openUrl(context, "https://ko-fi.com/inodxx") },
-                        title = stringResource(R.string.settings_donate_title),
-                        description = stringResource(R.string.settings_donate_desc),
-                        icon = Icons.Default.Favorite
-                    )
-
                     ListOption(
                         onClick = { navController.navigate("libraries") },
                         title = stringResource(R.string.settings_libraries_title),
@@ -365,19 +334,6 @@ fun SettingsScreen(
     }
 }
 
-fun openNotifPermission(activity: Activity) {
-    NotificationPermission.openSettings(activity)
-}
-
 fun openAccessibility(context: Context) {
     AccessibilityPermission.open(context)
-}
-
-@SuppressLint("UseKt")
-fun openUrl(context: Context, url: String) {
-    try {
-        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-        context.startActivity(intent)
-    } catch (_: Exception) {
-    }
 }
