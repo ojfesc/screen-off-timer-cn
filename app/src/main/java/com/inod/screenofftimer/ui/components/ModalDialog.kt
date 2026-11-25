@@ -27,7 +27,7 @@ fun ModalDialog(
     title: String,
     description: AnnotatedString,
     confirmText: String = "Agree",
-    dismissText: String = "Cancel",
+    dismissText: String? = "Cancel",
     leftButton: String? = null,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
@@ -79,11 +79,14 @@ fun ModalDialog(
                     ) {
 
 
-                        TextButton(onClick = onDismiss) {
-                            Text(
-                                dismissText, color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                        // 取消按钮可以省略，用于必须处理完才能离开的引导弹窗
+                        if (!dismissText.isNullOrEmpty()) {
+                            TextButton(onClick = onDismiss) {
+                                Text(
+                                    dismissText, color = MaterialTheme.colorScheme.primary,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
                         }
 
                         if (leftButton != null && onLeftButton != null) {
@@ -108,7 +111,7 @@ fun ModalDialog(
     title: String,
     description: String,
     confirmText: String = "Agree",
-    dismissText: String = "Cancel",
+    dismissText: String? = "Cancel",
     leftButton: String? = null,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
