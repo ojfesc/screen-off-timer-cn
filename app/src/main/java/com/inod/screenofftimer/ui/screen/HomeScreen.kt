@@ -2,7 +2,6 @@ package com.inod.screenofftimer.ui.screen
 
 import android.app.Activity
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -129,7 +128,10 @@ fun HomeScreen(
     val focusManager = LocalFocusManager.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // 回到前台时读取系统里的真实权限状态，避免界面开关与系统设置不一致
+    // 通知权限弹窗：按下开始时未授权才出现，授权后自动关闭
+    var showNotifPermissionDialog by remember { mutableStateOf(false) }
+
+    // 回到前台时同步锁屏权限，并在通知权限已授予后关闭引导弹窗
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -137,9 +139,8 @@ fun HomeScreen(
                 val dpmActive = isDpmActive(context)
                 viewModel.syncLockPermissions(a11y, dpmActive)
 
-                val granted = isNotifGranted(activity)
-                if (viewModel.isNotifPermission != granted) {
-                    viewModel.updateNotifPermission(granted)
+                if (isNotifGranted(activity)) {
+                    showNotifPermissionDialog = false
                 }
             }
         }
@@ -169,7 +170,6 @@ fun HomeScreen(
         }
     }
 
-    var showNotifPermissionDialog by remember { mutableStateOf(false) }
     var showLockMethodDialog by remember { mutableStateOf(false) }
     var editingField by remember { mutableStateOf<TimeField?>(null) }
 
@@ -194,13 +194,8 @@ fun HomeScreen(
         viewModel.startTimer(totalSeconds)
         viewModel.saveLastDrag(totalSeconds / 60)
 
-        val granted = isNotifGranted(activity)
-        if (!granted) {
-            if (viewModel.isNoShowNotifPermission) {
-                showToastProperly(context)
-            } else {
-                showNotifPermissionDialog = true
-            }
+        if (!isNotifGranted(activity)) {
+            showNotifPermissionDialog = true
             return@let
         }
 
@@ -216,12 +211,6 @@ fun HomeScreen(
         }
         Prefs.saveInputHours(context, 0)
         applyTotalSeconds(0)
-    }
-
-    val handleNotShowAgain: () -> Unit = {
-        viewModel.updateNoShowNotifPermission(true)
-        showNotifPermissionDialog = false
-        showToastProperly(context)
     }
 
     // 打开锁屏开关时，两种锁屏方式都未授权则让用户选择一种
@@ -406,25 +395,15 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // 通知权限弹窗
+        // 通知权限弹窗：与电池优化弹窗一致，只能去开启，授予后自动关闭
         ModalDialog(
             show = showNotifPermissionDialog,
             title = stringResource(R.string.dialog_notif_permission_title),
             description = stringResource(R.string.dialog_notif_permission_desc),
             confirmText = stringResource(R.string.action_go),
-            dismissText = stringResource(R.string.action_cancel),
-            onConfirm = {
-                showNotifPermissionDialog = false
-                openNotifSetting(activity)
-            },
-            onDismiss = {
-                showNotifPermissionDialog = false
-                if (!isNotifGranted(activity)) {
-                    showToastProperly(context)
-                }
-            },
-            leftButton = stringResource(R.string.dialog_notif_permission_no_show),
-            onLeftButton = { handleNotShowAgain() }
+            dismissText = null,
+            onConfirm = { openNotifSetting(activity) },
+            onDismiss = {}
         )
 
         // 锁屏方式弹窗
@@ -644,12 +623,4 @@ fun openNotifSetting(activity: Activity) {
 
 fun isNotifGranted(activity: Activity): Boolean {
     return NotificationPermission.isGranted(activity)
-}
-
-private fun showToastProperly(context: Context) {
-    Toast.makeText(
-        context,
-        context.getString(R.string.toast_enable_notification),
-        Toast.LENGTH_LONG
-    ).show()
 }
