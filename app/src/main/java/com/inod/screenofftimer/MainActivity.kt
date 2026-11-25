@@ -94,7 +94,7 @@ class MainActivity : ComponentActivity() {
             if (!areNotificationsEnabled) {
                 Toast.makeText(
                     this,
-                    "Please enable notifications for the timer to run properly.",
+                    getString(R.string.toast_enable_notification),
                     Toast.LENGTH_LONG
                 ).show()
             }
