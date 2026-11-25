@@ -32,6 +32,7 @@
 
     <!-- 电池优化权限弹窗 -->
     <string name="dialog_battery_title">请先授予电池优化权限</string>
+    <string name="dialog_battery_desc">息屏后系统可能冻结本应用，导致倒计时停住、到点无法自动锁屏。请在应用信息的「电池」里把本应用设为「无限制」。</string>
     <string name="action_go">前往</string>
 
     <!-- 通知权限弹窗 -->
