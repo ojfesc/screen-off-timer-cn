@@ -43,7 +43,7 @@ fun NotificationPermissionGate(context: Context) {
         description = stringResource(R.string.dialog_notif_permission_desc),
         confirmText = stringResource(R.string.action_go),
         dismissText = null,
-        onConfirm = { NotificationPermission.request(activity) },
+        onConfirm = { NotificationPermission.openSettings(activity) },
         onDismiss = {}
     )
 }
