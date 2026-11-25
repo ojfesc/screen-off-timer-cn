@@ -62,10 +62,6 @@ class TimerViewModel(
         private set
     var isDynamicColor by mutableStateOf(state.get<Boolean>("is_dynamic_color") ?: false)
         private set
-    var isNotifPermission by mutableStateOf(state.get<Boolean>("is_notif_permission") ?: false)
-        private set
-    var isNoShowNotifPermission by mutableStateOf(state.get<Boolean>("is_no_show_notif") ?: false)
-        private set
 
     init {
         viewModelScope.launch {
@@ -132,8 +128,6 @@ class TimerViewModel(
                 isAutoCloseOnStart = settings.isAutoCloseOnStart
                 isOpenApp = settings.openApp
                 isDynamicColor = settings.isDynamicColor
-                isNotifPermission = settings.isNotifPermission
-                isNoShowNotifPermission = settings.isNoShowNotif
 
                 if (isRunning) {
                     reconcileTimerState()   // resume
@@ -246,18 +240,6 @@ class TimerViewModel(
         isDynamicColor = value
         state["is_dynamic_color"] = value
         Prefs.saveDynamicColor(context, value)
-    }
-
-    fun updateNotifPermission(value: Boolean) {
-        isNotifPermission = value
-        state["is_notif_permission"] = value
-        Prefs.saveNotifPermission(context, value)
-    }
-
-    fun updateNoShowNotifPermission(value: Boolean) {
-        isNoShowNotifPermission = value
-        state["is_no_show_notif"] = value
-        Prefs.saveNoShowNotifPermission(context, value)
     }
 
     //timer logic and broadcast
